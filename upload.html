@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Our Memories</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-pink-50">
+    <!-- Navigation -->
+    <nav class="bg-pink-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Upload Our Memories</h1>
+            <div class="space-x-4">
+                <a href="home.html" class="hover:text-pink-200">Home</a>
+                <a href="upload.html" class="hover:text-pink-200">Our Memories</a>
+                <a href="shayari.html" class="hover:text-pink-200">Shayari</a>
+                <a href="admin.html" class="hover:text-pink-200">Admin</a>
+                <a href="video.html" class="hover:text-pink-200">Video Messages</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Upload Section -->
+    <section class="container mx-auto p-8">
+        <h2 class="text-3xl font-bold text-center mb-6">Upload Your Pictures</h2>
+        <form id="uploadForm" class="flex flex-col items-center">
+            <input type="file" id="fileInput" multiple class="mb-4" accept="image/*">
+            <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded">
+                Upload
+            </button>
+        </form>
+        <div id="preview" class="mt-6 grid grid-cols-2 gap-4"></div>
+    </section>
+
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+
+        uploadForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const files = fileInput.files;
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList = 'w-full h-32 object-cover rounded-lg shadow';
+                        preview.appendChild(img);
+                        saveToLocalStorage(file);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+        function saveToLocalStorage(file) {
+            let images = JSON.parse(localStorage.getItem('uploadedImages')) || [];
+            images.push(file.name);
+            localStorage.setItem('uploadedImages', JSON.stringify(images));
+        }
+    </script>
+</body>
+</html>
