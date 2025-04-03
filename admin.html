@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <!-- Password Protection -->
+    <div id="loginSection" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl">
+            <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+            <input type="password" id="adminPassword" placeholder="Enter password" class="w-full p-2 border rounded mb-4">
+            <button onclick="checkPassword()" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded">
+                Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Content (hidden by default) -->
+    <div id="adminContent" class="hidden">
+        <!-- Navigation -->
+        <nav class="bg-gray-800 text-white p-4 shadow-lg">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Admin Panel</h1>
+                <div class="space-x-4">
+                    <a href="home.html" class="hover:text-gray-300">Home</a>
+                    <a href="upload.html" class="hover:text-gray-300">Our Memories</a>
+                    <a href="shayari.html" class="hover:text-gray-300">Shayari</a>
+                    <a href="admin.html" class="hover:text-gray-300">Admin</a>
+                    <a href="video.html" class="hover:text-gray-300">Video Messages</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Admin Content Sections -->
+        <section class="container mx-auto p-8">
+            <div class="flex flex-wrap gap-8">
+                <!-- Video Management Section -->
+                <div class="bg-white p-6 rounded-lg shadow-lg flex-1 min-w-[300px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold">Video Management</h2>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="videoSearchAdmin" placeholder="Search videos..." 
+                                   class="text-sm p-2 border rounded w-40">
+                            <button id="refreshVideosBtn" class="text-pink-600 hover:text-pink-800 p-2">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="adminVideoList" class="space-y-4 max-h-[400px] overflow-y-auto">
+                        <!-- Videos will be loaded here -->
+                        <p class="text-gray-500">No videos found</p>
+                    </div>
+                    <div class="mt-4 text-sm text-gray-500">
+                        <span id="videoCount">0</span> videos stored
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="bg-white p-6 rounded-lg shadow-lg flex-1 min-w-[300px]">
+                    <h2 class="text-2xl font-bold mb-6">Upload Content</h2>
+                    <form id="adminUploadForm" class="flex flex-col items-center">
+                <input type="file" id="adminFileInput" multiple class="mb-4" accept="image/*">
+                <input type="text" id="imageDescription" placeholder="Image description" class="w-full p-2 border rounded mb-4">
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="priorityUpload" class="mr-2">
+                    <label for="priorityUpload">Priority Upload (shows first)</label>
+                </div>
+                <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    Upload
+                </button>
+            </form>
+            <div id="adminPreview" class="mt-6 grid grid-cols-2 gap-4"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Password protection
+        const ADMIN_PASSWORD = "love123"; // Default password
+        const loginSection = document.getElementById('loginSection');
+        const adminContent = document.getElementById('adminContent');
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('adminPassword').value;
+            if (enteredPassword === ADMIN_PASSWORD) {
+                loginSection.style.display = 'none';
+                adminContent.classList.remove('hidden');
+                localStorage.setItem('adminLoggedIn', 'true');
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            loginSection.style.display = 'none';
+            adminContent.classList.remove('hidden');
+        }
+
+        // Load videos for admin management
+        function loadAdminVideos(searchTerm = '') {
+            const videos = JSON.parse(localStorage.getItem('videos')) || [];
+            const adminVideoList = document.getElementById('adminVideoList');
+            
+            adminVideoList.innerHTML = '';
+            
+            // Filter videos if search term exists
+            const filteredVideos = searchTerm 
+                ? videos.filter(video => 
+                    video.date.toLowerCase().includes(searchTerm.toLowerCase()))
+                : videos;
+
+            if (filteredVideos.length === 0) {
+                adminVideoList.innerHTML = '<p class="text-gray-500">No videos found</p>';
+                document.getElementById('videoCount').textContent = '0';
+                return;
+            }
+
+            document.getElementById('videoCount').textContent = filteredVideos.length;
+
+            filteredVideos.forEach(video => {
+                const videoItem = document.createElement('div');
+                videoItem.className = 'bg-gray-50 p-4 rounded-lg';
+                videoItem.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <video src="${video.data}" class="w-24 h-16 object-cover rounded" controls></video>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">${video.date}</p>
+                            <p class="text-xs text-gray-500">${Math.round(video.data.length * 0.75 / 1024)} KB</p>
+                        </div>
+                        <button onclick="adminDeleteVideo('${video.id}')" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                adminVideoList.appendChild(videoItem);
+            });
+        }
+
+        // Admin delete video function
+        window.adminDeleteVideo = function(id) {
+            if (confirm('Are you sure you want to delete this video?')) {
+                let videos = JSON.parse(localStorage.getItem('videos')) || [];
+                videos = videos.filter(v => v.id !== id);
+                localStorage.setItem('videos', JSON.stringify(videos));
+                loadAdminVideos();
+                showAdminAlert('Video deleted successfully', 'success');
+            }
+        };
+
+        // Admin alert function
+        function showAdminAlert(message, type = 'error') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `fixed top-4 right-4 bg-${type === 'error' ? 'red' : 'green'}-100 border border-${type === 'error' ? 'red' : 'green'}-400 text-${type === 'error' ? 'red' : 'green'}-700 px-4 py-3 rounded shadow-lg z-50`;
+            alertDiv.innerHTML = `
+                <strong>${type === 'error' ? 'Error' : 'Success'}:</strong> ${message}
+                <button onclick="this.parentElement.remove()" class="absolute top-0 right-0 px-2 py-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        // Admin upload functionality
+        const adminUploadForm = document.getElementById('adminUploadForm');
+        const adminFileInput = document.getElementById('adminFileInput');
+        const adminPreview = document.getElementById('adminPreview');
+
+        adminUploadForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const files = adminFileInput.files;
+            const description = document.getElementById('imageDescription').value;
+            const isPriority = document.getElementById('priorityUpload').checked;
+
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList = 'w-full h-32 object-cover rounded-lg shadow';
+                        adminPreview.appendChild(img);
+                        saveToAdminStorage(file, description, isPriority);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+            function saveToAdminStorage(file, description, isPriority) {
+                let adminImages = JSON.parse(localStorage.getItem('adminImages')) || [];
+                adminImages.push({
+                    name: file.name,
+                    description: description,
+                    priority: isPriority,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('adminImages', JSON.stringify(adminImages));
+                showAdminAlert('Image uploaded successfully', 'success');
+            }
+
+        // Search functionality
+        document.getElementById('videoSearchAdmin').addEventListener('input', (e) => {
+            loadAdminVideos(e.target.value);
+        });
+
+        // Refresh button
+        document.getElementById('refreshVideosBtn').addEventListener('click', () => {
+            document.getElementById('videoSearchAdmin').value = '';
+            loadAdminVideos();
+        });
+
+        // Initial load
+        loadAdminVideos();
+
+        // Update video count periodically
+        setInterval(() => {
+            const videos = JSON.parse(localStorage.getItem('videos')) || [];
+            document.getElementById('videoCount').textContent = videos.length;
+        }, 5000);
+    </script>
+</body>
+</html>
