@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Content</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <!-- Password Protection -->
+    <div id="loginSection" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl">
+            <h2 class="text-2xl font-bold mb-4">Editor Login</h2>
+            <input type="password" id="editorPassword" placeholder="Enter password" class="w-full p-2 border rounded mb-4">
+            <button onclick="checkPassword()" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded">
+                Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Edit Content (hidden by default) -->
+    <div id="editContent" class="hidden">
+        <!-- Navigation -->
+        <nav class="bg-gray-800 text-white p-4 shadow-lg">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Edit Content</h1>
+                <div class="space-x-4">
+                    <a href="home.html" class="hover:text-gray-300">Home</a>
+                    <a href="upload.html" class="hover:text-gray-300">Our Memories</a>
+                    <a href="shayari.html" class="hover:text-gray-300">Shayari</a>
+                    <a href="admin.html" class="hover:text-gray-300">Admin</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Edit Dashboard -->
+        <section class="container mx-auto p-8">
+            <h2 class="text-3xl font-bold mb-8">Edit Application Content</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Homepage Content -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-bold mb-4">Homepage Content</h3>
+                    <form id="editHomeForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Main Title</label>
+                            <input type="text" id="homeTitle" class="w-full p-2 border rounded">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Subtitle</label>
+                            <textarea id="homeSubtitle" rows="2" class="w-full p-2 border rounded"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Button Text</label>
+                            <input type="text" id="homeButtonText" class="w-full p-2 border rounded">
+                        </div>
+                        <button type="submit" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Shayari Management -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-bold mb-4">Shayari Management</h3>
+                    <a href="shayari.html" class="block bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded text-center mb-4">
+                        Go to Shayari Editor
+                    </a>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Default Author Name</label>
+                        <input type="text" id="defaultAuthor" class="w-full p-2 border rounded">
+                    </div>
+                    <button onclick="resetShayaris()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Reset All Shayaris
+                    </button>
+                </div>
+
+                <!-- Image Management -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-bold mb-4">Image Management</h3>
+                    <a href="admin.html" class="block bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-center mb-4">
+                        Go to Image Upload
+                    </a>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Max Image Size (MB)</label>
+                        <input type="number" id="maxImageSize" class="w-full p-2 border rounded" min="1" max="10">
+                    </div>
+                    <button onclick="clearAllImages()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Clear All Images
+                    </button>
+                </div>
+
+                <!-- Settings -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-bold mb-4">Application Settings</h3>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Admin Password</label>
+                        <input type="password" id="newAdminPassword" class="w-full p-2 border rounded" placeholder="New password">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Editor Password</label>
+                        <input type="password" id="newEditorPassword" class="w-full p-2 border rounded" placeholder="New password">
+                    </div>
+                    <button onclick="updatePasswords()" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                        Update Passwords
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Password protection
+        const EDITOR_PASSWORD = "edit123"; // Default editor password
+        const loginSection = document.getElementById('loginSection');
+        const editContent = document.getElementById('editContent');
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('editorPassword').value;
+            // Check against all possible valid passwords
+            if (enteredPassword === 'love123' || 
+                enteredPassword === 'edit123' ||
+                enteredPassword === localStorage.getItem('adminPassword') || 
+                enteredPassword === localStorage.getItem('editorPassword')) {
+                
+                localStorage.setItem('editorLoggedIn', 'true');
+                loginSection.style.display = 'none';
+                editContent.classList.remove('hidden');
+                loadCurrentSettings();
+            } else {
+                alert('Incorrect password! Please try "love123" or "edit123"');
+            }
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('editorLoggedIn') === 'true') {
+            loginSection.style.display = 'none';
+            editContent.classList.remove('hidden');
+            loadCurrentSettings();
+        }
+
+        // Load current settings
+        function loadCurrentSettings() {
+            const homeSettings = JSON.parse(localStorage.getItem('homeSettings')) || {};
+            document.getElementById('homeTitle').value = homeSettings.title || "Happy Birthday My Love";
+            document.getElementById('homeSubtitle').value = homeSettings.subtitle || "Every moment with you is a blessing. Today we celebrate you!";
+            document.getElementById('homeButtonText').value = homeSettings.buttonText || "Click for Surprise!";
+            
+            const shayariSettings = JSON.parse(localStorage.getItem('shayariSettings')) || {};
+            document.getElementById('defaultAuthor').value = shayariSettings.defaultAuthor || "- Your Love";
+            
+            document.getElementById('maxImageSize').value = localStorage.getItem('maxImageSize') || 5;
+        }
+
+        // Save homepage changes
+        document.getElementById('editHomeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const homeSettings = {
+                title: document.getElementById('homeTitle').value,
+                subtitle: document.getElementById('homeSubtitle').value,
+                buttonText: document.getElementById('homeButtonText').value
+            };
+            localStorage.setItem('homeSettings', JSON.stringify(homeSettings));
+            alert('Homepage changes saved!');
+        });
+
+        // Reset all shayaris
+        function resetShayaris() {
+            if (confirm("Are you sure you want to reset all shayaris to default?")) {
+                localStorage.removeItem('shayaris');
+                alert('Shayaris have been reset to default.');
+            }
+        }
+
+        // Clear all images
+        function clearAllImages() {
+            if (confirm("Are you sure you want to delete all uploaded images?")) {
+                localStorage.removeItem('uploadedImages');
+                localStorage.removeItem('adminImages');
+                alert('All images have been deleted.');
+            }
+        }
+
+        // Update passwords
+        function updatePasswords() {
+            const newAdminPass = document.getElementById('newAdminPassword').value;
+            const newEditorPass = document.getElementById('newEditorPassword').value;
+            
+            if (newAdminPass) {
+                localStorage.setItem('adminPassword', newAdminPass);
+                document.getElementById('newAdminPassword').value = '';
+            }
+            
+            if (newEditorPass) {
+                localStorage.setItem('editorPassword', newEditorPass);
+                document.getElementById('newEditorPassword').value = '';
+            }
+            
+            if (newAdminPass || newEditorPass) {
+                alert('Passwords updated successfully!');
+            } else {
+                alert('No new passwords entered.');
+            }
+        }
+    </script>
+</body>
+</html>
