@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romantic Shayari</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+</head>
+<body class="bg-pink-50">
+    <!-- Navigation -->
+    <nav class="bg-pink-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Romantic Shayari</h1>
+            <div class="space-x-4">
+                <a href="home.html" class="hover:text-pink-200">Home</a>
+                <a href="upload.html" class="hover:text-pink-200">Our Memories</a>
+                <a href="shayari.html" class="hover:text-pink-200">Shayari</a>
+                <a href="admin.html" class="hover:text-pink-200">Admin</a>
+                <a href="video.html" class="hover:text-pink-200">Video Messages</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Shayari Section -->
+    <section class="container mx-auto p-8">
+        <h2 class="text-3xl font-bold text-center mb-8">For My Love ❤️</h2>
+        
+        <!-- Add New Shayari (Admin Only) -->
+        <div id="addShayariForm" class="hidden mb-8 bg-white p-6 rounded-lg shadow">
+            <h3 class="text-xl font-bold mb-4">Add New Shayari</h3>
+            <form id="newShayariForm">
+                <textarea id="shayariText" rows="4" class="w-full p-2 border rounded mb-4" placeholder="Enter your romantic shayari..."></textarea>
+                
+                <!-- Video Embed Option -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Attach Video Message (optional)</label>
+                    <select id="videoSelect" class="w-full p-2 border rounded">
+                        <option value="">No video</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded">
+                    Save Shayari
+                </button>
+            </form>
+        </div>
+
+        <!-- Shayari Container -->
+        <div id="shayariContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Sample Shayari (will be loaded from localStorage) -->
+            <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300">
+                <p class="text-lg mb-4" style="font-family: 'Noto Nastaliq Urdu', serif;">
+                    تمہاری یادوں کے سائے میں رہتا ہوں<br>
+                    تمہاری باتوں کے انداز میں جیتا ہوں
+                </p>
+                <p class="text-gray-600">- Your Love</p>
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button class="edit-btn hidden text-pink-600 hover:text-pink-800">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn hidden text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Check if admin is logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            document.getElementById('addShayariForm').classList.remove('hidden');
+            document.querySelectorAll('.edit-btn, .delete-btn').forEach(btn => {
+                btn.classList.remove('hidden');
+            });
+        }
+
+        // Load shayaris from localStorage
+        function loadShayaris() {
+            const container = document.getElementById('shayariContainer');
+            const shayaris = JSON.parse(localStorage.getItem('shayaris')) || [];
+            
+            if (shayaris.length === 0) {
+                // Add default shayari if none exists
+                const defaultShayari = [{
+                    text: "تمہاری یادوں کے سائے میں رہتا ہوں<br>تمہاری باتوں کے انداز میں جیتا ہوں",
+                    author: "- Your Love"
+                }];
+                localStorage.setItem('shayaris', JSON.stringify(defaultShayari));
+                shayaris.push(...defaultShayari);
+            }
+
+            container.innerHTML = '';
+            shayaris.forEach((shayari, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300';
+                card.innerHTML = `
+                    <p class="text-lg mb-4" style="font-family: 'Noto Nastaliq Urdu', serif;">${shayari.text}</p>
+                    <p class="text-gray-600">${shayari.author}</p>
+                    ${shayari.videoEmbed || ''}
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button onclick="editShayari(${index})" class="edit-btn ${localStorage.getItem('adminLoggedIn') === 'true' ? '' : 'hidden'} text-pink-600 hover:text-pink-800">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteShayari(${index})" class="delete-btn ${localStorage.getItem('adminLoggedIn') === 'true' ? '' : 'hidden'} text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Add new shayari
+        document.getElementById('newShayariForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const text = document.getElementById('shayariText').value;
+            if (text.trim()) {
+                const shayaris = JSON.parse(localStorage.getItem('shayaris')) || [];
+                const videoSelect = document.getElementById('videoSelect');
+                const videoId = videoSelect.value;
+                let videoEmbed = '';
+                
+                if (videoId) {
+                    const videos = JSON.parse(localStorage.getItem('videos')) || [];
+                    const video = videos.find(v => v.id.toString() === videoId);
+                    if (video) {
+                        videoEmbed = `<div class="mt-4"><video src="${video.data}" controls class="w-full h-48 object-cover rounded-lg"></video></div>`;
+                    }
+                }
+
+                shayaris.push({
+                    text: text.replace(/\n/g, '<br>'),
+                    author: "- Your Love",
+                    videoEmbed: videoEmbed
+                });
+                localStorage.setItem('shayaris', JSON.stringify(shayaris));
+                document.getElementById('shayariText').value = '';
+                loadShayaris();
+            }
+        });
+
+        // Edit shayari
+        function editShayari(index) {
+            const shayaris = JSON.parse(localStorage.getItem('shayaris'));
+            const newText = prompt("Edit shayari:", shayaris[index].text.replace(/<br>/g, '\n'));
+            if (newText !== null) {
+                shayaris[index].text = newText.replace(/\n/g, '<br>');
+                localStorage.setItem('shayaris', JSON.stringify(shayaris));
+                loadShayaris();
+            }
+        }
+
+        // Delete shayari
+        function deleteShayari(index) {
+            if (confirm("Are you sure you want to delete this shayari?")) {
+                const shayaris = JSON.parse(localStorage.getItem('shayaris'));
+                shayaris.splice(index, 1);
+                localStorage.setItem('shayaris', JSON.stringify(shayaris));
+                loadShayaris();
+            }
+        }
+
+        // Load videos for dropdown
+        function loadVideoOptions() {
+            const videoSelect = document.getElementById('videoSelect');
+            const videos = JSON.parse(localStorage.getItem('videos')) || [];
+            
+            // Clear existing options except first
+            while (videoSelect.options.length > 1) {
+                videoSelect.remove(1);
+            }
+            
+            // Add video options
+            videos.forEach(video => {
+                const option = document.createElement('option');
+                option.value = video.id;
+                option.textContent = `Video: ${video.date}`;
+                videoSelect.appendChild(option);
+            });
+        }
+
+        // Initial loads
+        loadShayaris();
+        loadVideoOptions();
+    </script>
+</body>
+</html>
